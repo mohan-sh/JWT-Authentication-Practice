@@ -21,6 +21,31 @@ const users = [
   },
 ];
 
+const SECRET_KEY = 'my_secret_key';
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer <token>
+
+  if (!token) return res.status(401).json({ error: 'Token missing' });
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Token invalid' });
+
+    req.user = user; // { username, role }
+    next();
+  });
+}
+
+app.get('/admin', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied. Admins only.' });
+  }
+
+  res.json({ message: `Welcome, Admin ${req.user.username}` });
+});
+
+
 
 
 
